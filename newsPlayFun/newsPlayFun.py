@@ -14,64 +14,99 @@ def newsPlayFun(request):
         Response object using
         `make_response <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>`.
     """
+    
     #리퀘스트 json을 받는 함수
     request_json = request.get_json()
+    print(request_json)
     
     if request.args and 'message' in request.args:
         return request.args.get('message')
 
     # NUGU 에서 사용하는 리퀘스트 json의 action 과 actionName을 파악
     elif request_json and 'action' in request_json:
-
+        
+        # 딕셔너리로 추가
+        newsdata = {}
+        
         # 각 actionName에 따른 발화
-        # summarizeNews 는 기본 발화. 1~5위까지의 상위 뉴스를 알려줌
         if request_json['action']['actionName'] == 'summarizeNews':
             
-            newsdata = ''
-            # 한개의 파라미터로 반환하기 때문에 문자열 한개 생성
-            newsdata += "1번." + downloadtext("nugunews.appspot.com","newsData0.txt")
-            newsdata += "2번." + downloadtext("nugunews.appspot.com","newsData"+str(1)+".txt")
-            newsdata += "3번." + downloadtext("nugunews.appspot.com","newsData"+str(2)+".txt")
-            newsdata += "4번." + downloadtext("nugunews.appspot.com","newsData"+str(3)+".txt")
-            newsdata += "5번." + downloadtext("nugunews.appspot.com","newsData"+str(4)+".txt")
-
-            #json에 생성된 문자열을 넣어 반환
             response_json = makeJsonReturn(newsdata)
             return response_json
         
-        # otherNews는 6위 부터의 랜덤한 뉴스를 발화
-        elif request_json['action']['actionName'] == 'otherNews':
+        elif request_json['action']['actionName'] == 's_n_default':
             
-            #뉴스를 중복해서 발화하지 않도록 하기 위해서 숫자 셔플로 랜덤하게 발화
-            rnd = [5,6,7,8,9,10,11,12,13,14,15,16,17,18,19] 
-            random.shuffle(rnd)
+            for h in range(1,6):                
+            	newsdata["news"+str(h)] = str(h)+"번." + downloadtext("nugunews.appspot.com","newsData"+str(h)+".txt")
             
-            newsdata = ''
-            newsdata += "1번." + downloadtext("nugunews.appspot.com","newsData"+str(rnd[0])+".txt")
-            newsdata += "2번." + downloadtext("nugunews.appspot.com","newsData"+str(rnd[1])+".txt")
-            newsdata += "3번." + downloadtext("nugunews.appspot.com","newsData"+str(rnd[2])+".txt")
-            newsdata += "4번." + downloadtext("nugunews.appspot.com","newsData"+str(rnd[3])+".txt")
-            newsdata += "5번." + downloadtext("nugunews.appspot.com","newsData"+str(rnd[4])+".txt")
+            response_json = makeJsonReturn(newsdata)
+            return response_json
+                                                                     
             
+        elif request_json['action']['actionName'] == 's_n_next1':
+            
+            for h in range(1,6):                
+            	newsdata["news"+str(h)] = str(h+5)+"번." + downloadtext("nugunews.appspot.com","newsData"+str(h+5)+".txt")
+                      
             response_json = makeJsonReturn(newsdata)
             return response_json
 
-        #moreNews는 6위부터 10위까지의 뉴스를 발화
-        elif request_json['action']['actionName'] == 'moreNews':  
+        elif request_json['action']['actionName'] == 's_n_next2':
             
-            newsdata = ''
-            newsdata += "6번." + downloadtext("nugunews.appspot.com","newsData"+str(5)+".txt")
-            newsdata += "7번." + downloadtext("nugunews.appspot.com","newsData"+str(6)+".txt")
-            newsdata += "8번." + downloadtext("nugunews.appspot.com","newsData"+str(7)+".txt")
-            newsdata += "9번." + downloadtext("nugunews.appspot.com","newsData"+str(8)+".txt")
-            newsdata += "10번." + downloadtext("nugunews.appspot.com","newsData"+str(9)+".txt")
+            for h in range(1,6):                
+            	newsdata["news"+str(h)] = str(h+10)+"번." + downloadtext("nugunews.appspot.com","newsData"+str(h+10)+".txt")
+                      
+            response_json = makeJsonReturn(newsdata)
+            return response_json
+        
+        elif request_json['action']['actionName'] == 's_n_next3':
             
+            for h in range(1,6):                
+            	newsdata["news"+str(h)] = str(h+15)+"번." + downloadtext("nugunews.appspot.com","newsData"+str(h+15)+".txt")
+                      
             response_json = makeJsonReturn(newsdata)
             return response_json
         
         
+        elif request_json['action']['actionName'] == 's_n_num':
+            
+            newsdata["flag"] = "False"
+            indexN = request_json['action']['parameters']['index']['value']
+            i = int(indexN)
+            
+            if i < 21:
+                newsdata["flag"] = "True"
+            
+            response_json = makeJsonReturn(newsdata)
+            return response_json
+        
+        elif request_json['action']['actionName'] == 's_n_numSingle':
+            
+            newsdata["flag"] = "True"
+            indexN = request_json['action']['parameters']['index']['value']
+                                                                                                
+            newsdata["selectNews"] = indexN+"번." + downloadtext("nugunews.appspot.com","newsData"+indexN+".txt")
+            
+            response_json = makeJsonReturn(newsdata)
+            return response_json
+        
+        elif request_json['action']['actionName'] == 's_n_numFrom':
+            
+            newsdata["flag"] = "True"
+            indexN = request_json['action']['parameters']['index']['value']
+            i = int(indexN)
+            
+            #if i < 21:
+            #    newsdata["flag"] = "True"
+                
+            for h in range(0,5):
+                if i+h < 21:
+                    newsdata["news"+str(h+1)] = str(i+h)+"번." + downloadtext("nugunews.appspot.com","newsData"+str(i+h)+".txt")
+                      
+            response_json = makeJsonReturn(newsdata)
+            return response_json
+
     else:
-        # 예외 상황 그냥 처리
         return "Hi"
 
 
@@ -86,14 +121,16 @@ def downloadtext(bucket_name, source_blob_name):
     newsData = str(blob.download_as_string(),"utf-8")
     return newsData
 
+
 #Json을 만들어서 response 하는 함수
 #NUGU 예시를 따라서 제작
 #output에 뉴스정보를 담아서 전송
-def makeJsonReturn(news):
+#딕셔너리 형태로 정보 받아서 처리
+def makeJsonReturn(newsData):
     response ={}
     response["version"]="2.0"
     response["resultCode"]="OK"
-    response["output"]={'news' : news, 'news2' : news, 'news3':news}
+    response["output"]= newsData
     response["directives"] = [{"type": "AudioPlayer.Play",
             "audioItem": {     
                 "stream": {
@@ -109,6 +146,12 @@ def makeJsonReturn(news):
                 "metadata": { }
             }
           }]
+
     #파이썬 딕셔너리를 json으로 만들어서 보냄. 문자열이 깨지지 않도록 ascii 를 False 로 바꿈
     Rjson = json.dumps(response, ensure_ascii=False)
     return Rjson
+
+
+    
+
+
